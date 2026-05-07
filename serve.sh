@@ -92,67 +92,142 @@ ${BOLD}${CYAN}╔═════════════════════
 EOF
 }
 
+MENU="main"
+MENU_DIRTY=1   # 1 = print full menu on next loop, 0 = print one-line strip only
+
+# One-liner reminder strip shown when MENU_DIRTY=0
+print_strip() {
+    case "$MENU" in
+        main)    echo -e "${DIM}[1] Linux  [2] Windows  [3] AD  [4] Other  |  [a]ll  [s]log  [t]ools  [r]efresh  [m]enu  [q]uit${NC}" ;;
+        linux)   echo -e "${DIM}LINUX:  [1] enum  [2] revshell  [3] transfer  |  [b]ack  [m]enu${NC}" ;;
+        windows) echo -e "${DIM}WIN:    [1] enum  [2] tokens  [3] ps-revshell  [4] transfer  |  [b]ack  [m]enu${NC}" ;;
+        ad)      echo -e "${DIM}AD:     [1] recon [2] kerber [3] asrep [4] dcsync [5] runas [6] lateral [7] sql [8] coerce [9] dump  |  [b]ack${NC}" ;;
+        other)   echo -e "${DIM}OTHER:  [1] listener  [2] revshell  [3] transfer  [4] pivot  [5] fallback  |  [b]ack${NC}" ;;
+    esac
+}
+
 print_menu() {
-    cat <<EOF
+    case "$MENU" in
+        main) cat <<EOF
 
 ${BOLD}${CYAN}━━━━━━━━━━━━━ MENU ━━━━━━━━━━━━━${NC}
 
-  ${BOLD}KILL-CHAIN PHASES${NC}
-  ${GREEN}1${NC})  Listener           ${DIM}(Kali side - nc/pwncat/msf)${NC}
-  ${GREEN}2${NC})  Reverse shell      ${DIM}(bash/python/ps oneliners)${NC}
-  ${GREEN}3${NC})  Linux enum         ${DIM}(linpeas, pspy, lse, les)${NC}
-  ${GREEN}4${NC})  Windows enum       ${DIM}(winPEAS, PowerUp, Sherlock, JAWS)${NC}
-  ${GREEN}5${NC})  Token abuse        ${DIM}(PrintSpoofer, GodPotato, JuicyPotato)${NC}
-
-  ${BOLD}ACTIVE DIRECTORY${NC}
-  ${GREEN}6${NC})  AD recon           ${DIM}(PowerView, SharpHound, kerbrute, LAPS)${NC}
-  ${GREEN}7${NC})  Kerberoast         ${DIM}(Rubeus + impacket + hashcat)${NC}
-  ${GREEN}8${NC})  AS-REPRoast        ${DIM}(Rubeus + impacket + hashcat)${NC}
-  ${GREEN}9${NC})  DCSync             ${DIM}(mimikatz + secretsdump)${NC}
-  ${GREEN}10${NC}) RunasCs            ${DIM}(user pivot with cleartext creds)${NC}
-  ${GREEN}11${NC}) Lateral movement   ${DIM}(PsExec, wmiexec, evil-winrm)${NC}
-  ${GREEN}12${NC}) PowerUpSQL         ${DIM}(MSSQL chain, xp_cmdshell)${NC}
-  ${GREEN}13${NC}) Coercion + AD CS   ${DIM}(PetitPotam, Certify, ntlmrelayx)${NC}
-  ${GREEN}14${NC}) Credential dump    ${DIM}(mimikatz, LaZagne, comsvcs)${NC}
-
-  ${BOLD}TRANSPORT${NC}
-  ${GREEN}15${NC}) File transfer      ${DIM}(nc, plink, socat, smb-share)${NC}
-  ${GREEN}16${NC}) Pivot / tunnel     ${DIM}(chisel, ligolo)${NC}
+  ${GREEN}1${NC})  Linux             ${DIM}(enum, privesc, file transfer)${NC}
+  ${GREEN}2${NC})  Windows           ${DIM}(enum, privesc, token abuse)${NC}
+  ${GREEN}3${NC})  Active Directory  ${DIM}(recon, kerberoast, dcsync, lateral, dump...)${NC}
+  ${GREEN}4${NC})  Other             ${DIM}(listener, revshell, pivot, transfer)${NC}
 
   ${BOLD}META${NC}
-  ${GREEN}a${NC})  Show ALL           ${DIM}(full compact cheatsheet)${NC}
-  ${GREEN}f${NC})  Fallback patterns  ${DIM}(when AV blocks something)${NC}
-  ${GREEN}s${NC})  Server log         ${DIM}(recent HTTP requests)${NC}
-  ${GREEN}t${NC})  Tool list          ${DIM}(ls of tools/)${NC}
-  ${GREEN}r${NC})  Refresh IP         ${DIM}(re-detect tun0)${NC}
+  ${GREEN}a${NC})  Show ALL          ${DIM}(full compact cheatsheet)${NC}
+  ${GREEN}s${NC})  Server log        ${DIM}(recent HTTP requests)${NC}
+  ${GREEN}t${NC})  Tool list         ${DIM}(ls of tools/)${NC}
+  ${GREEN}r${NC})  Refresh IP        ${DIM}(re-detect tun0)${NC}
   ${GREEN}c${NC})  Clear screen
-  ${GREEN}q${NC})  Quit               ${DIM}(stops the HTTP server)${NC}
+  ${GREEN}q${NC})  Quit              ${DIM}(stops the HTTP server)${NC}
 
 EOF
+            ;;
+        linux) cat <<EOF
+
+${BOLD}${CYAN}━━━━━━━ LINUX ━━━━━━━${NC}
+
+  ${GREEN}1${NC})  Enum & Privesc      ${DIM}(linpeas, pspy, lse, linux-exploit-suggester)${NC}
+  ${GREEN}2${NC})  Reverse shells      ${DIM}(bash/python/perl oneliners)${NC}
+  ${GREEN}3${NC})  File transfer       ${DIM}(wget, curl, socat)${NC}
+
+  ${GREEN}b${NC})  Back to main menu
+
+EOF
+            ;;
+        windows) cat <<EOF
+
+${BOLD}${CYAN}━━━━━━━ WINDOWS ━━━━━━━${NC}
+
+  ${GREEN}1${NC})  Enum & Privesc      ${DIM}(winPEAS, PrivescCheck, PowerUp, Sherlock, JAWS)${NC}
+  ${GREEN}2${NC})  Token abuse         ${DIM}(PrintSpoofer, GodPotato, JuicyPotato(NG))${NC}
+  ${GREEN}3${NC})  PowerShell revshell ${DIM}(Invoke-PowerShellTcp, powercat)${NC}
+  ${GREEN}4${NC})  File transfer       ${DIM}(nc.exe, plink, certutil, bitsadmin)${NC}
+
+  ${GREEN}b${NC})  Back to main menu
+
+EOF
+            ;;
+        ad) cat <<EOF
+
+${BOLD}${CYAN}━━━━━━━ ACTIVE DIRECTORY ━━━━━━━${NC}
+
+  ${GREEN}1${NC})  Recon               ${DIM}(PowerView, SharpHound, kerbrute, LAPSToolkit, adPEAS)${NC}
+  ${GREEN}2${NC})  Kerberoast          ${DIM}(Rubeus + impacket-GetUserSPNs + hashcat -m 13100)${NC}
+  ${GREEN}3${NC})  AS-REPRoast         ${DIM}(Rubeus + impacket-GetNPUsers + hashcat -m 18200)${NC}
+  ${GREEN}4${NC})  DCSync              ${DIM}(mimikatz lsadump + impacket-secretsdump)${NC}
+  ${GREEN}5${NC})  RunasCs             ${DIM}(user pivot with cleartext creds)${NC}
+  ${GREEN}6${NC})  Lateral movement    ${DIM}(PsExec, wmiexec, smbexec, evil-winrm)${NC}
+  ${GREEN}7${NC})  PowerUpSQL          ${DIM}(MSSQL chain, xp_cmdshell, linked servers)${NC}
+  ${GREEN}8${NC})  Coercion + AD CS    ${DIM}(PetitPotam, Certify, ntlmrelayx)${NC}
+  ${GREEN}9${NC})  Credential dump     ${DIM}(mimikatz, SafetyKatz, LaZagne, comsvcs)${NC}
+
+  ${GREEN}b${NC})  Back to main menu
+
+EOF
+            ;;
+        other) cat <<EOF
+
+${BOLD}${CYAN}━━━━━━━ OTHER ━━━━━━━${NC}
+
+  ${GREEN}1${NC})  Listener            ${DIM}(Kali side - nc, pwncat-cs, msfconsole)${NC}
+  ${GREEN}2${NC})  Reverse shell       ${DIM}(bash/python/ps oneliners, all platforms)${NC}
+  ${GREEN}3${NC})  File transfer       ${DIM}(nc, plink, socat, smb-share)${NC}
+  ${GREEN}4${NC})  Pivot / tunnel      ${DIM}(chisel, ligolo-ng, proxychains)${NC}
+  ${GREEN}5${NC})  Fallback patterns   ${DIM}(when AV blocks something)${NC}
+
+  ${GREEN}b${NC})  Back to main menu
+
+EOF
+            ;;
+    esac
 }
 
-# Map menu choice to payloads.sh --section name
+# Map current-menu + choice to payloads.sh --section name
 section_for() {
-    case "$1" in
-        1)  echo listener ;;
-        2)  echo revshell ;;
-        3)  echo linux ;;
-        4)  echo windows ;;
-        5)  echo tokens ;;
-        6)  echo ad-recon ;;
-        7)  echo kerberoast ;;
-        8)  echo asreproast ;;
-        9)  echo dcsync ;;
-        10) echo runas ;;
-        11) echo lateral ;;
-        12) echo powerupsql ;;
-        13) echo coercion ;;
-        14) echo dump ;;
-        15) echo transfer ;;
-        16) echo pivot ;;
-        f|F) echo fallback ;;
-        a|A) echo all ;;
-        *) echo "" ;;
+    local choice="$1"
+    case "$MENU" in
+        linux)
+            case "$choice" in
+                1) echo linux ;;
+                2) echo revshell ;;   # bash/python/perl applicable on Linux
+                3) echo transfer ;;
+            esac ;;
+        windows)
+            case "$choice" in
+                1) echo windows ;;
+                2) echo tokens ;;
+                3) echo revshell ;;   # ps-tcp / powercat in revshell section
+                4) echo transfer ;;
+            esac ;;
+        ad)
+            case "$choice" in
+                1) echo ad-recon ;;
+                2) echo kerberoast ;;
+                3) echo asreproast ;;
+                4) echo dcsync ;;
+                5) echo runas ;;
+                6) echo lateral ;;
+                7) echo powerupsql ;;
+                8) echo coercion ;;
+                9) echo dump ;;
+            esac ;;
+        other)
+            case "$choice" in
+                1) echo listener ;;
+                2) echo revshell ;;
+                3) echo transfer ;;
+                4) echo pivot ;;
+                5) echo fallback ;;
+            esac ;;
+        main)
+            case "$choice" in
+                a|A) echo all ;;
+            esac ;;
     esac
 }
 
@@ -201,12 +276,18 @@ fi
 
 # ---- interactive menu loop ----
 while :; do
-    print_menu
-    read -rp "$(echo -e ${BOLD}${GREEN})> ${NC}" choice
+    if [ "$MENU_DIRTY" -eq 1 ]; then
+        print_menu
+        MENU_DIRTY=0
+    else
+        print_strip
+    fi
+    read -rp "$(echo -e ${BOLD}${GREEN}${MENU}>${NC} ) " choice
     choice="${choice// /}"
     case "$choice" in
         q|Q|exit|quit) break ;;
-        c|C|clear) clear 2>/dev/null; print_banner ;;
+        c|C|clear) clear 2>/dev/null; print_banner; MENU_DIRTY=1 ;;
+        m|M|menu|\?|help) MENU_DIRTY=1 ;;
         s|S|log) show_log ;;
         t|T|tools|ls) show_tools ;;
         r|R|refresh)
@@ -214,13 +295,23 @@ while :; do
             export ARSENAL_IP="$IP"
             echo -e "${CYAN}[*]${NC} IP refreshed: ${GREEN}$IP${NC}"
             ;;
-        '')
-            : # ignore empty
+        b|B|back)
+            MENU="main"; MENU_DIRTY=1
             ;;
+        '') : ;;  # ignore empty
         *)
+            # On main menu, numeric 1-4 enters a submenu
+            if [ "$MENU" = "main" ]; then
+                case "$choice" in
+                    1) MENU="linux";   MENU_DIRTY=1; continue ;;
+                    2) MENU="windows"; MENU_DIRTY=1; continue ;;
+                    3) MENU="ad";      MENU_DIRTY=1; continue ;;
+                    4) MENU="other";   MENU_DIRTY=1; continue ;;
+                esac
+            fi
             sec="$(section_for "$choice")"
             if [ -z "$sec" ]; then
-                echo -e "${RED}[!]${NC} Unknown choice: '$choice'"
+                echo -e "${RED}[!]${NC} Unknown choice: '$choice'  ${DIM}(type 'm' to see the menu)${NC}"
             else
                 ARSENAL_IP="$IP" ARSENAL_PORT="$PORT" "$ROOT/payloads.sh" --section "$sec"
             fi
