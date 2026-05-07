@@ -49,23 +49,25 @@ IP="$(detect_ip)"
 export ARSENAL_IP="$IP"
 export ARSENAL_PORT="$PORT"
 
-LOGFILE="$(mktemp -t arsenal-server.XXXXXX.log)"
 SERVER_PID=""
 
+# Run python3 -m http.server in background but DON'T redirect its stderr —
+# every incoming request is printed live in the same terminal, exactly like
+# `python3 -m http.server` does standalone. Any prompt the user has typed
+# below will be preserved by readline.
 start_server() {
     cd "$ARS"
     if [ "$PORT" -lt 1024 ] && [ "$EUID" -ne 0 ]; then
         echo -e "${YELLOW}[!]${NC} Port $PORT requires sudo. Falling back to sudo..."
-        sudo python3 -m http.server "$PORT" > "$LOGFILE" 2>&1 &
+        sudo python3 -m http.server "$PORT" &
     else
-        python3 -m http.server "$PORT" > "$LOGFILE" 2>&1 &
+        python3 -m http.server "$PORT" &
     fi
     SERVER_PID=$!
     cd "$ROOT"
     sleep 0.4
     if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-        echo -e "${RED}[x]${NC} Server failed to start. Last lines:"
-        tail -10 "$LOGFILE"
+        echo -e "${RED}[x]${NC} Server failed to start."
         exit 1
     fi
 }
@@ -75,7 +77,6 @@ cleanup() {
         kill "$SERVER_PID" 2>/dev/null
         wait "$SERVER_PID" 2>/dev/null
     fi
-    rm -f "$LOGFILE"
 }
 trap cleanup EXIT INT TERM
 
@@ -88,7 +89,7 @@ ${BOLD}${CYAN}╔═════════════════════
   ${BOLD}URL  :${NC} ${GREEN}http://$IP:$PORT/${NC}
   ${BOLD}DIR  :${NC} $ARS
   ${BOLD}FILES:${NC} $(find "$ARS" -type f 2>/dev/null | wc -l | tr -d ' ')
-  ${BOLD}LOG  :${NC} $LOGFILE  ${DIM}([s] to view)${NC}
+  ${BOLD}LIVE :${NC} ${DIM}HTTP requests are printed below as they arrive${NC}
 EOF
 }
 
@@ -98,7 +99,7 @@ MENU_DIRTY=1   # 1 = print full menu on next loop, 0 = print one-line strip only
 # One-liner reminder strip shown when MENU_DIRTY=0
 print_strip() {
     case "$MENU" in
-        main)    echo -e "${DIM}[1] Linux  [2] Windows  [3] AD  [4] Other  |  [a]ll  [s]log  [t]ools  [r]efresh  [m]enu  [q]uit${NC}" ;;
+        main)    echo -e "${DIM}[1] Linux  [2] Windows  [3] AD  [4] Other  |  [a]ll  [t]ools  [r]efresh  [m]enu  [q]uit${NC}" ;;
         linux)   echo -e "${DIM}LINUX:  [1] enum  [2] revshell  [3] transfer  |  [b]ack  [m]enu${NC}" ;;
         windows) echo -e "${DIM}WIN:    [1] enum  [2] tokens  [3] dump  [4] ps-revshell  [5] transfer  |  [b]ack  [m]enu${NC}" ;;
         ad)      echo -e "${DIM}AD:     [1] recon [2] kerber [3] asrep [4] dcsync [5] runas [6] lateral [7] sql [8] coerce [9] dump  |  [b]ack${NC}" ;;
@@ -119,11 +120,12 @@ ${BOLD}${CYAN}━━━━━━━━━━━━━ MENU ━━━━━━━
 
   ${BOLD}META${NC}
   ${GREEN}a${NC})  Show ALL          ${DIM}(full compact cheatsheet)${NC}
-  ${GREEN}s${NC})  Server log        ${DIM}(recent HTTP requests)${NC}
   ${GREEN}t${NC})  Tool list         ${DIM}(ls of tools/)${NC}
   ${GREEN}r${NC})  Refresh IP        ${DIM}(re-detect tun0)${NC}
   ${GREEN}c${NC})  Clear screen
   ${GREEN}q${NC})  Quit              ${DIM}(stops the HTTP server)${NC}
+
+  ${DIM}HTTP requests appear inline as targets fetch files.${NC}
 
 EOF
             ;;
@@ -233,45 +235,6 @@ section_for() {
     esac
 }
 
-show_log() {
-    echo
-    echo -e "${BOLD}${CYAN}--- Last 20 HTTP requests ---${NC}"
-    if [ -s "$LOGFILE" ]; then
-        # python3 -m http.server logs go to stderr; redirected to LOGFILE
-        tail -20 "$LOGFILE" | grep -E "GET|POST|HEAD" || echo "  (no requests yet)"
-    else
-        echo "  (no log entries yet — has anything fetched yet?)"
-    fi
-}
-
-# Auto-display N most recent successful fetches above the prompt every loop.
-# Highlights 2xx green, 3xx cyan, 4xx/5xx red. Silent when nothing has fetched yet.
-print_recent_fetches() {
-    [ ! -s "$LOGFILE" ] && return
-    local lines
-    # parse python3 -m http.server lines like:
-    #   10.10.11.50 - - [07/May/2026 14:23:11] "GET /linux/linpeas.sh HTTP/1.1" 200 -
-    lines=$(grep -aE '"(GET|POST|HEAD)' "$LOGFILE" 2>/dev/null | tail -5)
-    [ -z "$lines" ] && return
-    echo
-    echo -e "${DIM}── recent fetches (server log) ──${NC}"
-    while IFS= read -r line; do
-        # Extract: IP, time, method+path, status code
-        local ip ts req code color
-        ip=$(echo "$line"   | awk '{print $1}')
-        ts=$(echo "$line"   | grep -oE '\[[^]]+\]' | tr -d '[]' | awk '{print $2}')
-        req=$(echo "$line"  | grep -oE '"[A-Z]+ [^"]+"' | tr -d '"')
-        code=$(echo "$line" | awk -F\" '{print $3}' | awk '{print $1}')
-        case "$code" in
-            2*) color="$GREEN" ;;
-            3*) color="$CYAN" ;;
-            4*|5*) color="$RED" ;;
-            *) color="" ;;
-        esac
-        printf "  ${YELLOW}%s${NC}  ${color}%s${NC}  %-15s  %s\n" "$ts" "$code" "$ip" "$req"
-    done <<< "$lines"
-}
-
 show_tools() {
     echo
     echo -e "${BOLD}${CYAN}--- Tool inventory ---${NC}"
@@ -300,13 +263,12 @@ fi
 if [ "$MODE" = "quiet" ]; then
     echo
     echo -e "${CYAN}[*]${NC} Server running on ${GREEN}http://$IP:$PORT/${NC}. Press CTRL+C to stop."
-    tail -f "$LOGFILE"
+    wait "$SERVER_PID"
     exit 0
 fi
 
 # ---- interactive menu loop ----
 while :; do
-    print_recent_fetches
     if [ "$MENU_DIRTY" -eq 1 ]; then
         print_menu
         MENU_DIRTY=0
@@ -323,7 +285,6 @@ while :; do
         q|Q|exit|quit) break ;;
         c|C|clear) clear 2>/dev/null; print_banner; MENU_DIRTY=1 ;;
         m|M|menu|\?|help) MENU_DIRTY=1 ;;
-        s|S|log) show_log ;;
         t|T|tools|ls) show_tools ;;
         r|R|refresh)
             IP="$(detect_ip)"
