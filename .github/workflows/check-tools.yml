@@ -68,6 +68,8 @@ jobs:
           check windows/JuicyPotato.exe
           check windows/PrintSpoofer64.exe
           check windows/GodPotato-NET4.exe
+          check windows/RunasCs.exe
+          check windows/Invoke-RunasCs.ps1
 
           echo "=== Transfer ==="
           check transfer/nc.exe

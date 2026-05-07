@@ -152,6 +152,23 @@ GP_NET4=$(github_release_url "BeichenDream/GodPotato" "GodPotato-NET4\\.exe$")
 GP_NET35=$(github_release_url "BeichenDream/GodPotato" "GodPotato-NET35\\.exe$")
 [ -n "$GP_NET35" ] && fetch "$ARS/windows/GodPotato-NET35.exe" "$GP_NET35"
 
+# RunasCs - alternate-credential program execution (lateral pivot when only creds + no PsExec)
+log "Fetching RunasCs (runas with alternate creds)..."
+RC_URL=$(github_release_url "antonioCoco/RunasCs" "RunasCs\\.zip$")
+if [ -n "$RC_URL" ] && [ ! -f "$ARS/windows/RunasCs.exe" ]; then
+    RC_TMP="$(mktemp -d)"
+    fetch "$RC_TMP/rc.zip" "$RC_URL" \
+        && (cd "$RC_TMP" && unzip -o rc.zip >/dev/null 2>&1) \
+        && cp "$RC_TMP"/RunasCs.exe "$ARS/windows/RunasCs.exe" 2>/dev/null \
+        && ok "extracted: RunasCs.exe"
+    # Also include the PowerShell port (Invoke-RunasCs.ps1) if shipped in the zip
+    [ -f "$RC_TMP/Invoke-RunasCs.ps1" ] && cp "$RC_TMP/Invoke-RunasCs.ps1" "$ARS/windows/Invoke-RunasCs.ps1"
+    rm -rf "$RC_TMP"
+fi
+# PowerShell port from raw repo (works when .exe is blocked but ps1 isn't)
+fetch "$ARS/windows/Invoke-RunasCs.ps1" \
+    "https://raw.githubusercontent.com/antonioCoco/RunasCs/master/Invoke-RunasCs.ps1"
+
 echo
 log "===== TRANSFER / TUNNELING ====="
 copy_or_fetch /usr/share/windows-resources/binaries/nc.exe \

