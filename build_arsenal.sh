@@ -93,8 +93,8 @@ copy_or_fetch /usr/share/peass/winpeas/winPEAS.bat \
     "$ARS/windows/winPEAS.bat" \
     "https://github.com/peass-ng/PEASS-ng/releases/latest/download/winPEAS.bat"
 
-fetch "$ARS/windows/winPEAS.ps1" \
-    "https://github.com/peass-ng/PEASS-ng/releases/latest/download/winPEAS.ps1"
+# NOTE: peass-ng releases no longer ship winPEAS.ps1 (removed upstream).
+# Use winPEASx64.exe / winPEAS.bat instead.
 
 fetch "$ARS/windows/PowerUp.ps1" \
     "https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/master/Privesc/PowerUp.ps1"
@@ -102,8 +102,8 @@ fetch "$ARS/windows/PowerUp.ps1" \
 fetch "$ARS/windows/Sherlock.ps1" \
     "https://raw.githubusercontent.com/rasta-mouse/Sherlock/master/Sherlock.ps1"
 
-fetch "$ARS/windows/Watson.ps1" \
-    "https://raw.githubusercontent.com/rasta-mouse/Watson/master/Watson.ps1"
+# NOTE: Watson upstream is C# only; no .ps1 in repo. Use Sherlock.ps1 (legacy)
+# or Watson.exe (must be self-compiled). Sherlock covers most CVEs.
 
 fetch "$ARS/windows/jaws-enum.ps1" \
     "https://raw.githubusercontent.com/411Hall/JAWS/master/jaws-enum.ps1"
@@ -117,9 +117,14 @@ fetch "$ARS/windows/accesschk.exe" \
 fetch "$ARS/windows/accesschk64.exe" \
     "https://live.sysinternals.com/accesschk64.exe"
 
-# PrivescCheck - winPEAS'in modern, sessiz alternatifi
-fetch "$ARS/windows/PrivescCheck.ps1" \
-    "https://raw.githubusercontent.com/itm4n/PrivescCheck/master/PrivescCheck.ps1"
+# PrivescCheck - winPEAS'in modern, sessiz alternatifi (release'den compiled .ps1)
+log "Fetching PrivescCheck.ps1 (latest release)..."
+PC_URL=$(github_release_url "itm4n/PrivescCheck" "PrivescCheck\\.ps1$")
+if [ -n "$PC_URL" ]; then
+    fetch "$ARS/windows/PrivescCheck.ps1" "$PC_URL"
+else
+    warn "PrivescCheck release URL not found - skipping"
+fi
 
 # Token abuse / SeImpersonate - "potato" ailesi
 log "Fetching potato exploits (SeImpersonate token abuse)..."
@@ -161,17 +166,27 @@ copy_or_fetch /usr/share/windows-resources/binaries/plink.exe \
     "https://the.earth.li/~sgtatham/putty/latest/w64/plink.exe"
 
 fetch "$ARS/transfer/socat-linux-x64" \
-    "https://github.com/3ndG4me/socat/releases/download/v1.7.4.1/socat-1.7.4.1-x86_64-linux"
+    "https://github.com/andrew-d/static-binaries/raw/master/binaries/linux/x86_64/socat"
 
 log "Fetching chisel..."
-CHISEL_URL_LINUX=$(github_release_url "jpillora/chisel" "linux_amd64.gz")
-CHISEL_URL_WIN=$(github_release_url "jpillora/chisel" "windows_amd64.gz")
-[ -n "$CHISEL_URL_LINUX" ] && fetch "$ARS/transfer/chisel-linux.gz" "$CHISEL_URL_LINUX"
-[ -n "$CHISEL_URL_WIN" ] && fetch "$ARS/transfer/chisel-windows.gz" "$CHISEL_URL_WIN"
-[ -f "$ARS/transfer/chisel-linux.gz" ] && [ ! -f "$ARS/transfer/chisel-linux" ] && \
-    gunzip -k "$ARS/transfer/chisel-linux.gz" && chmod +x "$ARS/transfer/chisel-linux" 2>/dev/null
-[ -f "$ARS/transfer/chisel-windows.gz" ] && [ ! -f "$ARS/transfer/chisel-windows.exe" ] && \
-    gunzip -c "$ARS/transfer/chisel-windows.gz" > "$ARS/transfer/chisel-windows.exe" 2>/dev/null
+# Linux: .gz with "chisel_<ver>_linux_amd64" inside. Windows: .zip with "chisel.exe" inside.
+CHISEL_URL_LINUX=$(github_release_url "jpillora/chisel" "linux_amd64\\.gz$")
+CHISEL_URL_WIN=$(github_release_url "jpillora/chisel" "windows_amd64\\.zip$")
+if [ -n "$CHISEL_URL_LINUX" ] && [ ! -f "$ARS/transfer/chisel-linux" ]; then
+    fetch "$ARS/transfer/_chisel-linux.gz" "$CHISEL_URL_LINUX" \
+        && gunzip -c "$ARS/transfer/_chisel-linux.gz" > "$ARS/transfer/chisel-linux" \
+        && rm -f "$ARS/transfer/_chisel-linux.gz" \
+        && chmod +x "$ARS/transfer/chisel-linux" \
+        && ok "extracted: chisel-linux"
+fi
+if [ -n "$CHISEL_URL_WIN" ] && [ ! -f "$ARS/transfer/chisel-windows.exe" ]; then
+    CTMP="$(mktemp -d)"
+    fetch "$CTMP/cw.zip" "$CHISEL_URL_WIN" \
+        && (cd "$CTMP" && unzip -o cw.zip >/dev/null 2>&1) \
+        && cp "$CTMP"/chisel*.exe "$ARS/transfer/chisel-windows.exe" 2>/dev/null \
+        && ok "extracted: chisel-windows.exe"
+    rm -rf "$CTMP"
+fi
 
 log "Fetching ligolo-ng..."
 LIGOLO_PROXY=$(github_release_url "nicocha30/ligolo-ng" "proxy.*linux_amd64.tar.gz")
@@ -243,13 +258,13 @@ fetch "$ARS/ad/PetitPotam.py" \
     "https://raw.githubusercontent.com/topotam/PetitPotam/main/PetitPotam.py"
 
 log "Fetching LaZagne (credential dumper)..."
+# Windows: official compiled .exe from releases
 LAZ_WIN=$(github_release_url "AlessandroZ/LaZagne" "lazagne\\.exe$|LaZagne\\.exe$")
-LAZ_LIN=$(github_release_url "AlessandroZ/LaZagne" "lazagne$|LaZagne$|lazagne_linux")
 [ -n "$LAZ_WIN" ] && fetch "$ARS/ad/LaZagne.exe" "$LAZ_WIN"
-[ -n "$LAZ_LIN" ] && fetch "$ARS/linux/lazagne" "$LAZ_LIN" && chmod +x "$ARS/linux/lazagne" 2>/dev/null
-# Source-based fallback (Python). Eski bir Windows'ta python yoksa exe kullanilir.
-fetch "$ARS/ad/laZagne.py" \
-    "https://raw.githubusercontent.com/AlessandroZ/LaZagne/master/laZagne.py" 2>/dev/null || true
+# Linux: no official binary - use Python source (target needs python).
+# Repo has Linux/laZagne.py as the Linux entrypoint.
+fetch "$ARS/linux/laZagne.py" \
+    "https://raw.githubusercontent.com/AlessandroZ/LaZagne/master/Linux/laZagne.py"
 
 echo
 log "===== ENUM / RECON ====="

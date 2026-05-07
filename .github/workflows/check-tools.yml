@@ -53,16 +53,14 @@ jobs:
           check linux/pspy32
           check linux/lse.sh
           check linux/linux-exploit-suggester.sh
-          check linux/lazagne
+          check linux/laZagne.py
 
           echo "=== Windows ==="
           check windows/winPEASx64.exe
           check windows/winPEASx86.exe
           check windows/winPEAS.bat
-          check windows/winPEAS.ps1
           check windows/PowerUp.ps1
           check windows/Sherlock.ps1
-          check windows/Watson.ps1
           check windows/jaws-enum.ps1
           check windows/Seatbelt.exe
           check windows/accesschk64.exe
