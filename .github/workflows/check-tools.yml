@@ -1,0 +1,143 @@
+name: Check tool URLs
+
+on:
+  schedule:
+    # Every Monday at 06:00 UTC — early warning for broken release URLs
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+  push:
+    paths:
+      - 'build_arsenal.sh'
+      - '.github/workflows/check-tools.yml'
+
+jobs:
+  build:
+    name: Run build_arsenal.sh and verify all tools downloaded
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq curl wget gzip tar unzip
+
+      - name: Make scripts executable
+        run: chmod +x *.sh
+
+      - name: Run build_arsenal.sh
+        id: build
+        run: ./build_arsenal.sh
+        continue-on-error: true
+
+      - name: Verify expected files exist
+        run: |
+          set -u
+          MISSING=0
+          check() {
+              if [ -s "tools/$1" ]; then
+                  echo "  ✅ $1"
+              else
+                  echo "  ❌ MISSING: $1"
+                  MISSING=$((MISSING + 1))
+              fi
+          }
+
+          echo "=== Linux ==="
+          check linux/linpeas.sh
+          check linux/linpeas_small.sh
+          check linux/pspy64
+          check linux/pspy32
+          check linux/lse.sh
+          check linux/linux-exploit-suggester.sh
+          check linux/lazagne
+
+          echo "=== Windows ==="
+          check windows/winPEASx64.exe
+          check windows/winPEASx86.exe
+          check windows/winPEAS.bat
+          check windows/winPEAS.ps1
+          check windows/PowerUp.ps1
+          check windows/Sherlock.ps1
+          check windows/Watson.ps1
+          check windows/jaws-enum.ps1
+          check windows/Seatbelt.exe
+          check windows/accesschk64.exe
+          check windows/PrivescCheck.ps1
+          check windows/JuicyPotato.exe
+          check windows/PrintSpoofer64.exe
+          check windows/GodPotato-NET4.exe
+
+          echo "=== Transfer ==="
+          check transfer/nc.exe
+          check transfer/nc64.exe
+          check transfer/plink.exe
+          check transfer/socat-linux-x64
+          check transfer/chisel-linux
+          check transfer/chisel-windows.exe
+          check transfer/ligolo-proxy
+          check transfer/ligolo-agent-linux
+          check transfer/ligolo-agent-windows.exe
+
+          echo "=== AD ==="
+          check ad/PowerView.ps1
+          check ad/SharpHound.ps1
+          check ad/Rubeus.exe
+          check ad/Certify.exe
+          check ad/SafetyKatz.exe
+          check ad/mimikatz_trunk.zip
+          check ad/kerbrute_linux
+          check ad/kerbrute_windows.exe
+          check ad/PetitPotam.py
+          check ad/LaZagne.exe
+
+          echo "=== Enum / RevShells ==="
+          check enum/enum4linux-ng.py
+          check enum/adPEAS.ps1
+          check revshells/powercat.ps1
+          check revshells/Invoke-PowerShellTcp.ps1
+          check revshells/php-reverse-shell.php
+
+          echo
+          if [ "$MISSING" -gt 0 ]; then
+              echo "❌ $MISSING file(s) missing — some upstream URLs may be broken"
+              exit 1
+          fi
+          echo "✅ All tools fetched successfully"
+
+      - name: Print arsenal summary
+        if: always()
+        run: |
+          echo "## 📊 Arsenal stats" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Total files | $(find tools/ -type f 2>/dev/null | wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total size | $(du -sh tools/ 2>/dev/null | awk '{print $1}') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build date | $(date -u +%Y-%m-%d) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Files by category" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          for d in linux windows transfer ad enum revshells; do
+              if [ -d "tools/$d" ]; then
+                  echo "$d/ ($(ls tools/$d | wc -l | tr -d ' ') files):"
+                  ls tools/$d | sed 's/^/  - /'
+              fi
+          done >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  syntax:
+    name: Bash syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check syntax of all .sh scripts
+        run: |
+          for f in *.sh; do
+              echo "checking $f..."
+              bash -n "$f"
+          done
+          echo "✅ All scripts have valid syntax"

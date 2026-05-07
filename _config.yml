@@ -1,0 +1,32 @@
+title: OSCP Arsenal
+description: Self-contained, kill-chain-organized OSCP toolkit. Serves ~60 offensive tools over HTTP from your Kali box for one-liner delivery to targets.
+remote_theme: pages-themes/cayman@v0.2.0
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+show_downloads: true
+
+# SEO
+url: https://kocaemre.github.io
+baseurl: /oscp-arsenal
+author: kocaemre
+
+# GitHub repo metadata
+repository: kocaemre/oscp-arsenal
+github:
+  is_project_page: true
+
+# Markdown / Liquid
+markdown: kramdown
+kramdown:
+  syntax_highlighter: rouge
+  input: GFM
+
+# Don't include these in the rendered Pages site
+exclude:
+  - tools/
+  - tools.old.*/
+  - "*.sh"
+  - .github/
+  - .gitignore
+  - LICENSE
