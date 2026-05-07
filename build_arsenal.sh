@@ -117,7 +117,7 @@ fetch "$ARS/windows/accesschk.exe" \
 fetch "$ARS/windows/accesschk64.exe" \
     "https://live.sysinternals.com/accesschk64.exe"
 
-# PrivescCheck - winPEAS'in modern, sessiz alternatifi (release'den compiled .ps1)
+# PrivescCheck - modern, stealthier alternative to winPEAS (compiled .ps1 from release)
 log "Fetching PrivescCheck.ps1 (latest release)..."
 PC_URL=$(github_release_url "itm4n/PrivescCheck" "PrivescCheck\\.ps1$")
 if [ -n "$PC_URL" ]; then
@@ -126,7 +126,7 @@ else
     warn "PrivescCheck release URL not found - skipping"
 fi
 
-# Token abuse / SeImpersonate - "potato" ailesi
+# Token abuse / SeImpersonate - "potato" family
 log "Fetching potato exploits (SeImpersonate token abuse)..."
 
 # JuicyPotato - eski Windows (Server 2012/2016, Win10 < 1809)
@@ -136,7 +136,7 @@ JP_URL=$(github_release_url "ohpe/juicy-potato" "JuicyPotato\\.exe$")
 [ ! -f "$ARS/windows/JuicyPotato.exe" ] && fetch "$ARS/windows/JuicyPotato.exe" \
     "https://github.com/ohpe/juicy-potato/releases/download/v0.1/JuicyPotato.exe"
 
-# JuicyPotatoNG - JuicyPotato'nun Win10 1809+ icin yeniden yazimi
+# JuicyPotatoNG - rewrite of JuicyPotato for Win10 1809+
 JPNG_URL=$(github_release_url "antonioCoco/JuicyPotatoNG" "JuicyPotatoNG\\.exe$")
 [ -n "$JPNG_URL" ] && fetch "$ARS/windows/JuicyPotatoNG.exe" "$JPNG_URL"
 
