@@ -244,6 +244,34 @@ show_log() {
     fi
 }
 
+# Auto-display N most recent successful fetches above the prompt every loop.
+# Highlights 2xx green, 3xx cyan, 4xx/5xx red. Silent when nothing has fetched yet.
+print_recent_fetches() {
+    [ ! -s "$LOGFILE" ] && return
+    local lines
+    # parse python3 -m http.server lines like:
+    #   10.10.11.50 - - [07/May/2026 14:23:11] "GET /linux/linpeas.sh HTTP/1.1" 200 -
+    lines=$(grep -aE '"(GET|POST|HEAD)' "$LOGFILE" 2>/dev/null | tail -5)
+    [ -z "$lines" ] && return
+    echo
+    echo -e "${DIM}── recent fetches (server log) ──${NC}"
+    while IFS= read -r line; do
+        # Extract: IP, time, method+path, status code
+        local ip ts req code color
+        ip=$(echo "$line"   | awk '{print $1}')
+        ts=$(echo "$line"   | grep -oE '\[[^]]+\]' | tr -d '[]' | awk '{print $2}')
+        req=$(echo "$line"  | grep -oE '"[A-Z]+ [^"]+"' | tr -d '"')
+        code=$(echo "$line" | awk -F\" '{print $3}' | awk '{print $1}')
+        case "$code" in
+            2*) color="$GREEN" ;;
+            3*) color="$CYAN" ;;
+            4*|5*) color="$RED" ;;
+            *) color="" ;;
+        esac
+        printf "  ${YELLOW}%s${NC}  ${color}%s${NC}  %-15s  %s\n" "$ts" "$code" "$ip" "$req"
+    done <<< "$lines"
+}
+
 show_tools() {
     echo
     echo -e "${BOLD}${CYAN}--- Tool inventory ---${NC}"
@@ -278,6 +306,7 @@ fi
 
 # ---- interactive menu loop ----
 while :; do
+    print_recent_fetches
     if [ "$MENU_DIRTY" -eq 1 ]; then
         print_menu
         MENU_DIRTY=0
