@@ -70,6 +70,7 @@ jobs:
           check windows/GodPotato-NET4.exe
           check windows/RunasCs.exe
           check windows/Invoke-RunasCs.ps1
+          check windows/PowerUpSQL.ps1
 
           echo "=== Transfer ==="
           check transfer/nc.exe
@@ -81,6 +82,8 @@ jobs:
           check transfer/ligolo-proxy
           check transfer/ligolo-agent-linux
           check transfer/ligolo-agent-windows.exe
+          check transfer/PsExec.exe
+          check transfer/PsExec64.exe
 
           echo "=== AD ==="
           check ad/PowerView.ps1
@@ -93,6 +96,7 @@ jobs:
           check ad/kerbrute_windows.exe
           check ad/PetitPotam.py
           check ad/LaZagne.exe
+          check ad/LAPSToolkit.ps1
 
           echo "=== Enum / RevShells ==="
           check enum/enum4linux-ng.py

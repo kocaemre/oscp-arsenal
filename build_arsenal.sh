@@ -169,6 +169,20 @@ fi
 fetch "$ARS/windows/Invoke-RunasCs.ps1" \
     "https://raw.githubusercontent.com/antonioCoco/RunasCs/master/Invoke-RunasCs.ps1"
 
+# PowerUpSQL - SQL Server attack toolkit (NetSPI). xp_cmdshell, linked servers, impersonation.
+fetch "$ARS/windows/PowerUpSQL.ps1" \
+    "https://raw.githubusercontent.com/NetSPI/PowerUpSQL/master/PowerUpSQL.ps1"
+
+# LAPSToolkit - read LAPS-managed local admin passwords from AD
+fetch "$ARS/ad/LAPSToolkit.ps1" \
+    "https://raw.githubusercontent.com/leoloobeek/LAPSToolkit/master/LAPSToolkit.ps1"
+
+# PsExec (Sysinternals) - classic Windows-to-Windows lateral movement
+fetch "$ARS/transfer/PsExec.exe" \
+    "https://live.sysinternals.com/PsExec.exe"
+fetch "$ARS/transfer/PsExec64.exe" \
+    "https://live.sysinternals.com/PsExec64.exe"
+
 echo
 log "===== TRANSFER / TUNNELING ====="
 copy_or_fetch /usr/share/windows-resources/binaries/nc.exe \
