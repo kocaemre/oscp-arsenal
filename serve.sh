@@ -100,7 +100,7 @@ print_strip() {
     case "$MENU" in
         main)    echo -e "${DIM}[1] Linux  [2] Windows  [3] AD  [4] Other  |  [a]ll  [s]log  [t]ools  [r]efresh  [m]enu  [q]uit${NC}" ;;
         linux)   echo -e "${DIM}LINUX:  [1] enum  [2] revshell  [3] transfer  |  [b]ack  [m]enu${NC}" ;;
-        windows) echo -e "${DIM}WIN:    [1] enum  [2] tokens  [3] ps-revshell  [4] transfer  |  [b]ack  [m]enu${NC}" ;;
+        windows) echo -e "${DIM}WIN:    [1] enum  [2] tokens  [3] dump  [4] ps-revshell  [5] transfer  |  [b]ack  [m]enu${NC}" ;;
         ad)      echo -e "${DIM}AD:     [1] recon [2] kerber [3] asrep [4] dcsync [5] runas [6] lateral [7] sql [8] coerce [9] dump  |  [b]ack${NC}" ;;
         other)   echo -e "${DIM}OTHER:  [1] listener  [2] revshell  [3] transfer  [4] pivot  [5] fallback  |  [b]ack${NC}" ;;
     esac
@@ -145,8 +145,9 @@ ${BOLD}${CYAN}━━━━━━━ WINDOWS ━━━━━━━${NC}
 
   ${GREEN}1${NC})  Enum & Privesc      ${DIM}(winPEAS, PrivescCheck, PowerUp, Sherlock, JAWS)${NC}
   ${GREEN}2${NC})  Token abuse         ${DIM}(PrintSpoofer, GodPotato, JuicyPotato(NG))${NC}
-  ${GREEN}3${NC})  PowerShell revshell ${DIM}(Invoke-PowerShellTcp, powercat)${NC}
-  ${GREEN}4${NC})  File transfer       ${DIM}(nc.exe, plink, certutil, bitsadmin)${NC}
+  ${GREEN}3${NC})  Credential dump     ${DIM}(mimikatz, SafetyKatz, LaZagne, comsvcs LSASS)${NC}
+  ${GREEN}4${NC})  PowerShell revshell ${DIM}(Invoke-PowerShellTcp, powercat)${NC}
+  ${GREEN}5${NC})  File transfer       ${DIM}(nc.exe, plink, certutil, bitsadmin)${NC}
 
   ${GREEN}b${NC})  Back to main menu
 
@@ -201,8 +202,9 @@ section_for() {
             case "$choice" in
                 1) echo windows ;;
                 2) echo tokens ;;
-                3) echo revshell ;;   # ps-tcp / powercat in revshell section
-                4) echo transfer ;;
+                3) echo dump ;;       # mimikatz / safetykatz / lazagne / comsvcs
+                4) echo revshell ;;   # ps-tcp / powercat in revshell section
+                5) echo transfer ;;
             esac ;;
         ad)
             case "$choice" in
