@@ -282,7 +282,11 @@ while :; do
     else
         print_strip
     fi
-    read -rp "$(echo -e ${BOLD}${GREEN}${MENU}>${NC} ) " choice
+    # Single-keystroke input (no Enter needed). All menu options are 1 char.
+    # Add a newline manually since -n1 doesn't echo one.
+    printf "%s" "$(echo -e ${BOLD}${GREEN}${MENU}>${NC} )"
+    read -rsn1 choice
+    echo "$choice"
     choice="${choice// /}"
     case "$choice" in
         q|Q|exit|quit) break ;;
