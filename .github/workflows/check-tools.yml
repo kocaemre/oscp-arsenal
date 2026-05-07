@@ -104,6 +104,10 @@ jobs:
           check revshells/powercat.ps1
           check revshells/Invoke-PowerShellTcp.ps1
           check revshells/php-reverse-shell.php
+          check revshells/cmd.jsp
+          check revshells/cmd.aspx
+          check revshells/reverse.jsp
+          check revshells/shell-laudanum.aspx
 
           echo
           if [ "$MISSING" -gt 0 ]; then

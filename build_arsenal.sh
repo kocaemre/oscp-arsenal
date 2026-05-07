@@ -316,11 +316,23 @@ fetch "$ARS/revshells/Invoke-PowerShellTcp.ps1" \
 fetch "$ARS/revshells/php-reverse-shell.php" \
     "https://raw.githubusercontent.com/pentestmonkey/php-reverse-shell/master/php-reverse-shell.php"
 
-fetch "$ARS/revshells/cmd.jsp" \
-    "https://raw.githubusercontent.com/tennc/webshell/master/jsp/cmd.jsp"
+# Web shells: prefer Kali's local /usr/share/webshells/, fall back to
+# danielmiessler/SecLists (FuzzDB collection) which is the long-lived mirror.
+copy_or_fetch /usr/share/webshells/jsp/cmdjsp.jsp \
+    "$ARS/revshells/cmd.jsp" \
+    "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Web-Shells/FuzzDB/cmd.jsp"
 
-fetch "$ARS/revshells/cmdasp.aspx" \
-    "https://raw.githubusercontent.com/tennc/webshell/master/fuzzdb-webshell/aspx/cmdasp.aspx"
+copy_or_fetch /usr/share/webshells/aspx/cmdasp.aspx \
+    "$ARS/revshells/cmd.aspx" \
+    "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Web-Shells/FuzzDB/cmd.aspx"
+
+# JSP reverse-shell bonus (uses Runtime.getRuntime().exec)
+fetch "$ARS/revshells/reverse.jsp" \
+    "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Web-Shells/FuzzDB/reverse.jsp"
+
+# Laudanum aspx (more featured, file browser + cmd)
+fetch "$ARS/revshells/shell-laudanum.aspx" \
+    "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Web-Shells/laudanum-1.0/aspx/shell.aspx"
 
 echo
 log "===== WORDLISTS (referenced, not copied) ====="
